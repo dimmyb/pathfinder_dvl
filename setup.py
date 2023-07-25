@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'pathfinder_dvl = pathfinder_dvl.pathfinder_dvl:main',
         ],
     },
 )

@@ -9,10 +9,10 @@ from kyogre_msgs.msg import DataPoint, DVL
 
 class PathfinderDVL(Node):
     def __init__(self):
-        super().__init__('pathfinder_self.dvl')
+        super().__init__('pathfinder_dvl')
 
         # self.dvl data publisher setup
-        self.self.dvl_data_publisher_ = self.create_publisher(self.dvl, 'Pathfinderself.dvl/data', 2)
+        self.dvl_data_publisher_ = self.create_publisher(DVL, 'PathfinderDVL/data', 2)
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -51,7 +51,7 @@ class PathfinderDVL(Node):
 
         #NOTE: the \r character is required for continuous stream i.e (PD6\r")
 
-        self.get_logger().info('Pathfinderself.dvl node has been initialized')
+        self.get_logger().info('PathfinderDVL node has been initialized')
 
         self.self.dvl_heading = 0
         self.east_trans = 0
@@ -74,7 +74,7 @@ class PathfinderDVL(Node):
 
     def timer_callback(self):
         msg = DVL()
-        self.self.dvl_data_publisher_.publish(msg)
+        self.dvl_data_publisher_.publish(msg)
 
         self.loop_time = time.time()
 
