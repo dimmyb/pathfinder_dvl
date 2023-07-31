@@ -16,6 +16,7 @@ class PathfinderDVL(Node):
         timer_period = 0.5  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
+        # TODO: data point is no longer update
         # data point subscription setup
         self.data_point_subscription_ = self.create_subscription(
             DataPoint,
@@ -25,35 +26,36 @@ class PathfinderDVL(Node):
         self.data_point = DataPoint()
 
         # Initialize serial connection
-        # self.dvl = serial.Serial("/dev/ttyUSB0", 115200) #Ubuntu Serial
-        self.dvl = serial.Serial("/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0", 115200) #Ubuntu Serial
+        self.dvl = serial.Serial("/dev/ttyUSB0", 115200) #Ubuntu Serial
+        # self.dvl = serial.Serial("/dev/serial/by-id/usb-Prolific_Technology_Inc._USB-Serial_Controller-if00-port0", 115200) #Ubuntu Serial
+        # self.dvl = serial.Serial("/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_ABSCDNWM-if00-port0", 115200) #Ubuntu Serial
 
-        self.dvl.write("===") #self.dvl Break (PathFinder Guide p. 24 and p.99)
+        self.dvl.write(b"===") #self.dvl Break (PathFinder Guide p. 24 and p.99)
 
         #PD6 settings --------------------------------------------------------------
-        self.dvl.write("CR1\r") # set factory defaults.(Pathfinder guide p.67)
-        self.dvl.write("CP1\r") # required command
+        self.dvl.write(b"CR1\r") # set factory defaults.(Pathfinder guide p.67)
+        self.dvl.write(b"CP1\r") # required command
         #PD6 settings --------------------------------------------------------------
-        self.dvl.write("PD6\r") #pd6 data format (Pathfinder Guide p.207) <---important
-        # self.dvl.write("BK0\r")
+        self.dvl.write(b"PD6\r") #pd6 data format (Pathfinder Guide p.207) <---important
+        # self.dvl.write(b"BK0\r")
         #PD13 settings -------------------------------------------------------------
-        # self.dvl.write("PD13\r")
-        self.dvl.write("EX11110\r") # coordinate transformation (Pathfinder guide p.124)
-        self.dvl.write("EA+4500\r") # heading alignment (Pathfinder guide 118)
-        # self.dvl.write("EZ11110010\r") # internal speed of sound, depth, heading, pitch, roll, temperature
-        self.dvl.write("EZ11000010\r") # internal speed of sound, depth, temperature
-        # self.dvl.write("EZ10000010\r") # default sensor source (Pathfinder guide 125)
-        # self.dvl.write("EZ11011010\r") # internal speed of sound, depth, pitch, roll, temperature
-        # self.dvl.write("EZ10000010\r") # internal speed of sound, temperature
+        # self.dvl.write(b"PD13\r")
+        self.dvl.write(b"EX11110\r") # coordinate transformation (Pathfinder guide p.124)
+        self.dvl.write(b"EA+4500\r") # heading alignment (Pathfinder guide 118)
+        # self.dvl.write(b"EZ11110010\r") # internal speed of sound, depth, heading, pitch, roll, temperature
+        self.dvl.write(b"EZ11000010\r") # internal speed of sound, depth, temperature
+        # self.dvl.write(b"EZ10000010\r") # default sensor source (Pathfinder guide 125)
+        # self.dvl.write(b"EZ11011010\r") # internal speed of sound, depth, pitch, roll, temperature
+        # self.dvl.write(b"EZ10000010\r") # internal speed of sound, temperature
 
-        self.dvl.write("CK\r") #stores present parameters (Pathfinder guide 114)
-        self.dvl.write("CS\r") #start pinning (Pathfinder guide 115)
+        self.dvl.write(b"CK\r") #stores present parameters (Pathfinder guide 114)
+        self.dvl.write(b"CS\r") #start pinning (Pathfinder guide 115)
 
         #NOTE: the \r character is required for continuous stream i.e (PD6\r")
 
         self.get_logger().info('PathfinderDVL node has been initialized')
 
-        self.self.dvl_heading = 0
+        self.dvl_heading = 0
         self.east_trans = 0
         self.north_trans = 0
         self.up_trans = 0
@@ -64,6 +66,7 @@ class PathfinderDVL(Node):
 
         self.pitch = 0
         self.roll = 0
+        self.yaw = 0
         self.heading = 0
 
         self.loop_time = time.time()
@@ -88,7 +91,7 @@ class PathfinderDVL(Node):
                 self.heading_int = int(self.heading)
                 if (self.heading - self.heading_int) >= 0.5:
                     self.heading_int += 1
-                self.dvl.write("EH " + str(self.heading_int) + ", 1\r") #Update Heading
+                self.dvl.write(b"EH " + bytes(str(self.heading_int), 'utf-8') + b", 1\r") #Update Heading
             if self.pitch and self.roll and self.mod_val % 2 == 1:
                 self.mod_val = 0
                 self.pitch = self.pitch 
@@ -103,7 +106,7 @@ class PathfinderDVL(Node):
                 if (self.roll - self.roll_int) >= 0.5:
                     self.roll_int += 1
 
-                self.dvl.write("EP " + str(self.pitch_int) + ", " + str(self.roll_int) + ", 1\r") #Update Heading
+                self.dvl.write(b"EP " + bytes(str(self.pitch_int), 'utf-8') + b", " + bytes(str(self.roll_int), 'utf-8') + b", 1\r") #Update Heading
         # print("in loop")
         if self.dvl.in_waiting > 0: #If there is a message from the self.dvl
             try:
